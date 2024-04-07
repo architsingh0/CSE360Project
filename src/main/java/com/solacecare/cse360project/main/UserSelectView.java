@@ -5,13 +5,18 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.control.Button;
 import javafx.stage.Stage;
+import org.springframework.stereotype.Component;
 
+@Component
 public class UserSelectView {
     private BorderPane view;
     private Stage stage;
 
-    public UserSelectView(Stage stage) {
-        this.stage = stage;
+    public UserSelectView() {
+
+    }
+
+    public void initializeComponents(){
         view = new BorderPane();
 
         VBox vBox = new VBox(10);
@@ -34,6 +39,10 @@ public class UserSelectView {
         view.setCenter(vBox);
 
         BorderPane.setAlignment(vBox, Pos.CENTER);
+    }
+
+    public void setStage(Stage stage){
+        this.stage = stage;
     }
 
     public BorderPane getView() {

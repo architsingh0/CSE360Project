@@ -6,13 +6,20 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.springframework.stereotype.Component;
 
+@Component
 public class PatientView {
     private VBox layout;
     private Stage stage;
 
-    public PatientView(Stage stage) {
-        this.stage = stage;
+    private Patient currentPatient;
+
+    public PatientView() {
+
+    }
+
+    public void initializeComponents(){
         TabPane view = new TabPane();
 
         Tab tabVisits = new Tab("Visits");
@@ -36,7 +43,15 @@ public class PatientView {
         layout.getChildren().addAll(view, logoutButton);
     }
 
+    public void setStage(Stage stage){
+        this.stage = stage;
+    }
+
     public VBox getView() {
         return layout;
+    }
+
+    public void setPatient(Patient patient) {
+        currentPatient = patient;
     }
 }
