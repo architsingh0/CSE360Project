@@ -68,7 +68,7 @@ public class Prescription {
 
     @Override
     public String toString() {
-        return String.format("Medicine: %s, Dosage: %s, Pharmacy: %s", medicineName, medicineDosage, pharmacyAddr);
+        return String.format("\n-Medicine: %s, Dosage: %s, Pharmacy: %s", medicineName, medicineDosage, pharmacyAddr);
     }
 
 }
