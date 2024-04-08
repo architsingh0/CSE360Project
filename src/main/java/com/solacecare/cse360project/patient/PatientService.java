@@ -25,17 +25,17 @@ public class PatientService {
         if (patientOpt.isPresent()) {
             Patient patient = patientOpt.get();
             List<PatientVisit> existingVisits = patient.getVisits();
-            existingVisits.clear();
+//            existingVisits.clear();
             List<PatientVisit> newVisits = patientVisitRepository.findByPatientIdentifier(patientIdentifier);
-            existingVisits.addAll(newVisits);
-            newVisits.forEach(visit -> {
-                if (visit.getPatient() != patient) {
-                    visit.setPatient(patient);
+            if (newVisits != null) {
+                for (PatientVisit visit : newVisits) {
+                    if (visit.getPatient() != patient) {
+                        patient.getVisits().add(visit);
+                        visit.setPatient(patient);
+                    }
                 }
-            });
+            }
             patientRepository.save(patient);
-        } else {
-            throw new RuntimeException("Patient not found with identifier: " + patientIdentifier);
         }
     }
 }

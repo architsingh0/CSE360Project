@@ -58,8 +58,9 @@ public class LoginView {
                 }
                 break;
             case "Nurse":
-                if(nurseRepository.findByEmailAndPassword(email, password).isPresent()){
-                    MainJFX.goToNurseView();
+                Optional<Nurse> nurse = nurseRepository.findByEmailAndPassword(email, password);
+                if(nurse.isPresent()){
+                    MainJFX.goToNurseView(nurse.get());
                 }
                 else{
                     throw new Exception("No user found. Email or password may be incorrect");

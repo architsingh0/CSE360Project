@@ -12,6 +12,7 @@ public class PatientVisit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private LocalDate dateOfBirth;
     private LocalDate date;
     private LocalTime time;
     private String patientIdentifier;
@@ -25,12 +26,13 @@ public class PatientVisit {
     @ManyToOne
     @JoinColumn(name = "patient_id")
     private Patient patient;
-    @OneToMany(mappedBy = "patientVisit", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "patientVisit", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Prescription> prescriptions = new ArrayList<>();
     public PatientVisit() {
     }
 
-    public PatientVisit(LocalDate date, LocalTime time, String patientIdentifier, double weight, double height, double bodyTemp, double bloodPressure, String nurseNotes) {
+    public PatientVisit(LocalDate dateOfBirth, LocalDate date, LocalTime time, String patientIdentifier, double weight, double height, double bodyTemp, double bloodPressure, String nurseNotes) {
+        this.dateOfBirth = dateOfBirth;
         this.date = date;
         this.time = time;
         this.patientIdentifier = patientIdentifier;
@@ -39,6 +41,14 @@ public class PatientVisit {
         this.bodyTemp = bodyTemp;
         this.bloodPressure = bloodPressure;
         this.nurseNotes = nurseNotes;
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
     }
 
     public LocalDate getDate() {
@@ -135,5 +145,22 @@ public class PatientVisit {
 
     public void setPrescriptions(List<Prescription> prescriptions) {
         this.prescriptions = prescriptions;
+    }
+
+    @Override
+    public String toString() {
+        return "PatientVisit{" +
+                "date=" + dateOfBirth +
+                ", time=" + time +
+                ", patientIdentifier='" + patientIdentifier + '\'' +
+                ", weight=" + weight +
+                ", height=" + height +
+                ", bodyTemp=" + bodyTemp +
+                ", bloodPressure=" + bloodPressure +
+                ", nurseNotes='" + nurseNotes + '\'' +
+                ", symptoms='" + symptoms + '\'' +
+                ", drNotes='" + drNotes + '\'' +
+                ", prescriptions=" + prescriptions +
+                '}';
     }
 }

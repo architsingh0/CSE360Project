@@ -1,6 +1,7 @@
 package com.solacecare.cse360project.main;
 
 import com.solacecare.cse360project.Main;
+import com.solacecare.cse360project.nurse.Nurse;
 import com.solacecare.cse360project.nurse.NurseView;
 import com.solacecare.cse360project.doctor.DoctorView;
 import com.solacecare.cse360project.patient.Patient;
@@ -45,10 +46,11 @@ public class MainJFX extends Application {
         primaryStage.setScene(scene);
     }
 
-    public static void goToNurseView() {
+    public static void goToNurseView(Nurse nurse) {
         NurseView nurseView = springContext.getBean(NurseView.class);
         nurseView.setStage(primaryStage);
         nurseView.initializeComponents();
+        nurseView.setCurrentNurse(nurse);
         Scene scene = new Scene(nurseView.getView(), 800, 600);
         primaryStage.setScene(scene);
     }

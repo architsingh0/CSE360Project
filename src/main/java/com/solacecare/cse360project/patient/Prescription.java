@@ -65,4 +65,10 @@ public class Prescription {
     public void setPatientVisit(PatientVisit patientVisit) {
         this.patientVisit = patientVisit;
     }
+
+    @Override
+    public String toString() {
+        return String.format("Medicine: %s, Dosage: %s, Pharmacy: %s", medicineName, medicineDosage, pharmacyAddr);
+    }
+
 }
