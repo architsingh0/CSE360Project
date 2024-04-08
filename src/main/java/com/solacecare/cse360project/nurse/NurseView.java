@@ -203,15 +203,15 @@ public class NurseView {
             }
         });
 
-
+        refreshMessages();
         view.getTabs().addAll(tabPatientVitals, tabPatientHistory, tabMessages);
+        tabMessages.setContent(root);
 
         Button logoutButton = new Button("Logout");
         logoutButton.setOnAction(e -> MainJFX.goToUserSelectView());
 
         layout = new VBox(10);
         layout.getChildren().addAll(view, logoutButton);
-        tabMessages.setContent(root);
     }
 
     private void searchPatientVisits(Accordion accordion, TextField searchField) {
@@ -303,7 +303,7 @@ public class NurseView {
         List<Message> messages = Stream.concat(
                 messageRepository.findBySenderEmail(currentNurse.getEmail()).stream(),
                 messageRepository.findByRecipientEmail(currentNurse.getEmail()).stream()
-        ).distinct().collect(Collectors.toList());
+        ).distinct().toList();
 
         messagePreviews.clear();
         messagePreviews.addAll(messages);
