@@ -13,6 +13,7 @@ import jakarta.transaction.Transactional;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
@@ -27,7 +28,7 @@ import java.util.stream.Stream;
 
 @Component
 public class DoctorView {
-    private VBox layout;
+    private BorderPane layout;
     private Stage stage;
     private Doctor currentDoctor;
     private ObservableList<Message> messagePreviews;
@@ -51,8 +52,19 @@ public class DoctorView {
     }
 
     public void initializeComponents() {
-        layout = new VBox(10);
+        layout = new BorderPane();
+        layout.setPadding(new Insets(10));
         TabPane view = new TabPane();
+
+        HBox topBar = new HBox();
+        topBar.setAlignment(Pos.TOP_RIGHT);
+        Button logoutButton = new Button("Logout");
+        logoutButton.setOnAction(e -> MainJFX.goToUserSelectView());
+
+        Label nurseNameLabel = new Label();
+        nurseNameLabel.setText("Hello ".concat(currentDoctor.getFirstName().concat(" ").concat(currentDoctor.getLastName())));
+        topBar.getChildren().addAll(nurseNameLabel, logoutButton);
+        HBox.setMargin(logoutButton, new Insets(0, 0, 0, 10));
 
         Tab patientVisitHistory = new Tab("Patient Visit History");
         patientVisitHistory.setClosable(false);
@@ -77,10 +89,10 @@ public class DoctorView {
 
         view.getTabs().addAll(patientVisitHistory, physicalExam, tabPrescribe, tabMessages);
 
-        Button logoutButton = new Button("Logout");
         logoutButton.setOnAction(e -> MainJFX.goToUserSelectView());
 
-        layout.getChildren().addAll(view, logoutButton);
+        layout.setTop(topBar);
+        layout.setCenter(view);
         VBox.setVgrow(view, Priority.ALWAYS);
     }
 
@@ -166,16 +178,15 @@ public class DoctorView {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item.toString()); // Customize as needed
+                    setText(item.toString());
                 }
             }
         });
         searchButton.setOnAction(e -> {
             String patientIdentifier = patientIdentifierField.getText();
-            // Use the repository to fetch all prescriptions for this patient
             List<Prescription> prescriptions = prescriptionRepository.findAllByPatientVisitPatientIdentifier(patientIdentifier);
-            prescriptionsList.getItems().clear(); // Clear existing items
-            prescriptionsList.getItems().addAll(prescriptions); // Add all fetched prescriptions
+            prescriptionsList.getItems().clear();
+            prescriptionsList.getItems().addAll(prescriptions);
         });
         Button prescribeButton = new Button("Prescribe New Medicine");
 
@@ -183,10 +194,8 @@ public class DoctorView {
             String patientIdentifier = patientIdentifierField.getText();
             List<PatientVisit> visits = patientVisitRepository.findByPatientIdentifier(patientIdentifier);
             if (visits.isEmpty()) {
-                // Handle case where no visits exist for the identifier
                 return;
             }
-            // Assuming visits are ordered, with the most recent last
             PatientVisit latestVisit = visits.get(visits.size() - 1);
 
             Dialog<Prescription> dialog = new Dialog<>();
@@ -242,8 +251,6 @@ public class DoctorView {
     }
 
     private void setupMessagesTab(Tab tab) {
-        // Similar setup as provided in the messages tab of NurseView,
-        // adjusted for PatientView specifics
         BorderPane root = new BorderPane();
         HBox topBar = new HBox();
         Button composeButton = new Button("Compose");
@@ -251,7 +258,6 @@ public class DoctorView {
         topBar.getChildren().addAll(composeButton, refreshButton);
         root.setTop(topBar);
 
-        // SplitPane for message list and detail view
         SplitPane mainArea = new SplitPane();
         messagePreviews = FXCollections.observableArrayList();
         ListView<Message> messageListView = new ListView<>(messagePreviews);
@@ -277,8 +283,6 @@ public class DoctorView {
         });
         messageDetailContainer = new VBox(new Label("Message Detail"), messageDetailView, replyButton);
 
-//        messageDetailContainer.getChildren().add(replyButton);
-
         mainArea.getItems().addAll(messageListContainer, messageDetailContainer);
         root.setCenter(mainArea);
 
@@ -288,12 +292,10 @@ public class DoctorView {
         messageListView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 messageDetailContainer.getChildren().remove(repliesContainer);
-//                repliesContainer = null;
                 displayMessageDetails(newSelection.getId());
             }
         });
         refreshMessages();
-//        VBox.setVgrow(root, Priority.ALWAYS);
         tab.setContent(root);
     }
 
@@ -356,9 +358,6 @@ public class DoctorView {
                     message.getRecipient().getEmail(),
                     message.getContent());
             messageDetailView.setText(details);
-
-            // Prepare a container specifically for replies, which does not disturb the "Reply" button
-//            repliesContainer = null;
             messageDetailContainer.getChildren().remove(repliesContainer);
             repliesContainer = null;
             repliesContainer = new VBox();
@@ -373,12 +372,6 @@ public class DoctorView {
             }
 
             messageDetailContainer.getChildren().add(repliesContainer);
-
-//            ScrollPane repliesScrollPane = new ScrollPane(repliesContainer);
-//            repliesScrollPane.setFitToWidth(true);
-//
-//            messageDetailContainer.getChildren().add(repliesScrollPane);
-
         });
     }
 
@@ -440,7 +433,7 @@ public class DoctorView {
         this.stage = stage;
     }
 
-    public VBox getView() {
+    public BorderPane getView() {
         return layout;
     }
 

@@ -10,11 +10,15 @@ import com.solacecare.cse360project.patient.Patient;
 import com.solacecare.cse360project.patient.PatientRepository;
 import com.solacecare.cse360project.patient.PatientService;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -123,10 +127,20 @@ public class LoginView {
     }
 
     public void initializeComponents(){
-        view = new HBox(20);
-        layout = new VBox(10); // Create a VBox for vertical layout
-        view.setPadding(new Insets(15, 12, 15, 12));
-        layout.setPadding(new Insets(15, 12, 15, 12));
+        layout = new VBox(20); // Increased spacing for the overall layout
+        view = new HBox(20); // Spacing between form elements
+        view.setAlignment(Pos.CENTER);
+        layout.setAlignment(Pos.TOP_CENTER);
+        layout.setPadding(new Insets(30, 50, 50, 50)); // Adjust as needed
+
+        // Logo ImageView
+        ImageView logoImageView = new ImageView(new Image(getClass().getResourceAsStream("/logo.png")));
+        logoImageView.setFitHeight(100); // Adjust the size as needed
+        logoImageView.setPreserveRatio(true);
+
+        // Welcome message
+        Label welcomeLabel = new Label("Welcome, please login or create an account.");
+        welcomeLabel.setFont(new Font("Arial", 16)); // Adjust the font size as needed
 
         // Form for account creation
         GridPane createAccountForm = new GridPane();
@@ -219,10 +233,8 @@ public class LoginView {
         Button backButton = new Button("Back");
         backButton.setOnAction(e -> MainJFX.goToUserSelectView());
 
-        // Add the back button to the layout
-        layout.getChildren().addAll(view, backButton);
-
-        // Add forms to the HBox
+        // Adding components to the layout
+        layout.getChildren().addAll(logoImageView, welcomeLabel, view, backButton);
         view.getChildren().addAll(createAccountForm, loginForm);
     }
 

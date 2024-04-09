@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -27,7 +28,7 @@ import java.util.stream.Stream;
 
 @Component
 public class PatientView {
-    private VBox layout;
+    private BorderPane layout;
     private Stage stage;
     private Patient currentPatient;
     private ObservableList<Message> messagePreviews;
@@ -52,7 +53,19 @@ public class PatientView {
     }
 
     public void initializeComponents(){
+        layout = new BorderPane();
+        layout.setPadding(new Insets(10));
         TabPane view = new TabPane();
+
+        HBox topBar = new HBox();
+        topBar.setAlignment(Pos.TOP_RIGHT);
+        Button logoutButton = new Button("Logout");
+        logoutButton.setOnAction(e -> MainJFX.goToUserSelectView());
+
+        Label nurseNameLabel = new Label();
+        nurseNameLabel.setText("Hello ".concat(currentPatient.getFirstName().concat(" ").concat(currentPatient.getLastName())));
+        topBar.getChildren().addAll(nurseNameLabel, logoutButton);
+        HBox.setMargin(logoutButton, new Insets(0, 0, 0, 10));
 
         Tab tabVisits = new Tab("Visits");
         tabVisits.setClosable(false);
@@ -71,11 +84,8 @@ public class PatientView {
 
         view.getTabs().addAll(tabVisits, tabEditInformation, tabMessages);
 
-        Button logoutButton = new Button("Logout");
-        logoutButton.setOnAction(e -> MainJFX.goToUserSelectView());
-
-        layout = new VBox(10);
-        layout.getChildren().addAll(view, logoutButton);
+        layout.setTop(topBar);
+        layout.setCenter(view);
     }
 
     private void setupVisitsTab(Tab tabVisits) {
@@ -125,7 +135,6 @@ public class PatientView {
         editForm.setVgap(10);
         editForm.setHgap(10);
 
-        // Example: First Name and Last Name fields
         TextField firstNameField = new TextField(currentPatient.getFirstName());
         TextField lastNameField = new TextField(currentPatient.getLastName());
         TextField emailField = new TextField(currentPatient.getEmail());
@@ -134,8 +143,6 @@ public class PatientView {
         TextField phoneNum = new TextField(currentPatient.getPhoneNum());
         TextField insuranceNum = new TextField(String.valueOf(currentPatient.getInsuranceNum()));
         TextField pharmacyAddr = new TextField(currentPatient.getPharmacyAddr());
-
-        // Add other fields for date of birth, insurance number, etc., initializing them with currentPatient's data
 
         Button saveButton = new Button("Save");
         saveButton.setOnAction(event -> {
@@ -169,23 +176,19 @@ public class PatientView {
         editForm.add(new Label("Pharmacy Address:"), 0, 7);
         editForm.add(pharmacyAddr, 1, 7);
 
-        editForm.add(saveButton, 1, 9); // Adjust grid positions as necessary
+        editForm.add(saveButton, 1, 9);
 
         tabEditInformation.setContent(editForm);
     }
 
 
     private void setupMessagesTab(Tab tab) {
-        // Similar setup as provided in the messages tab of NurseView,
-        // adjusted for PatientView specifics
         BorderPane root = new BorderPane();
         HBox topBar = new HBox();
         Button composeButton = new Button("Compose");
         Button refreshButton = new Button("Refresh");
         topBar.getChildren().addAll(composeButton, refreshButton);
         root.setTop(topBar);
-
-        // SplitPane for message list and detail view
         SplitPane mainArea = new SplitPane();
         messagePreviews = FXCollections.observableArrayList();
         ListView<Message> messageListView = new ListView<>(messagePreviews);
@@ -211,8 +214,6 @@ public class PatientView {
         });
         messageDetailContainer = new VBox(new Label("Message Detail"), messageDetailView, replyButton);
 
-//        messageDetailContainer.getChildren().add(replyButton);
-
         mainArea.getItems().addAll(messageListContainer, messageDetailContainer);
         root.setCenter(mainArea);
 
@@ -222,12 +223,10 @@ public class PatientView {
         messageListView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 messageDetailContainer.getChildren().remove(repliesContainer);
-//                repliesContainer = null;
                 displayMessageDetails(newSelection.getId());
             }
         });
         refreshMessages();
-//        VBox.setVgrow(root, Priority.ALWAYS);
         tab.setContent(root);
     }
 
@@ -291,8 +290,6 @@ public class PatientView {
                     message.getContent());
             messageDetailView.setText(details);
 
-            // Prepare a container specifically for replies, which does not disturb the "Reply" button
-//            repliesContainer = null;
             messageDetailContainer.getChildren().remove(repliesContainer);
             repliesContainer = null;
             repliesContainer = new VBox();
@@ -307,12 +304,6 @@ public class PatientView {
             }
 
             messageDetailContainer.getChildren().add(repliesContainer);
-
-//            ScrollPane repliesScrollPane = new ScrollPane(repliesContainer);
-//            repliesScrollPane.setFitToWidth(true);
-//
-//            messageDetailContainer.getChildren().add(repliesScrollPane);
-
         });
     }
 
@@ -359,7 +350,7 @@ public class PatientView {
         this.stage = stage;
     }
 
-    public VBox getView() {
+    public BorderPane getView() {
         return layout;
     }
 
