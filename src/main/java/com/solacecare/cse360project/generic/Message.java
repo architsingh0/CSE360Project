@@ -18,8 +18,12 @@ public class Message {
     private User recipient;
     private String title;
     private String content;
-    @OneToMany
-    @JoinColumn(name = "message_id")
+
+    @ManyToOne
+    @JoinColumn(name = "parent_message_id")
+    private Message parentMessage;
+
+    @OneToMany(mappedBy = "parentMessage", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Message> replies = new ArrayList<>();
 
     public String getTitle() {
@@ -60,5 +64,21 @@ public class Message {
 
     public void setRecipient(User recipient) {
         this.recipient = recipient;
+    }
+
+    public Message getParentMessage() {
+        return parentMessage;
+    }
+
+    public void setParentMessage(Message parentMessage) {
+        this.parentMessage = parentMessage;
+    }
+
+    public List<Message> getReplies() {
+        return replies;
+    }
+
+    public void setReplies(List<Message> replies) {
+        this.replies = replies;
     }
 }

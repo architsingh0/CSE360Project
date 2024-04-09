@@ -5,6 +5,7 @@ import com.solacecare.cse360project.generic.MessageRepository;
 import com.solacecare.cse360project.generic.User;
 import com.solacecare.cse360project.generic.UserRepository;
 import com.solacecare.cse360project.main.MainJFX;
+import jakarta.transaction.Transactional;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -30,6 +31,8 @@ public class PatientView {
     private Stage stage;
     private Patient currentPatient;
     private ObservableList<Message> messagePreviews;
+    private VBox messageDetailContainer;
+    private VBox repliesContainer;
     TextArea messageDetailView;
 
     @Autowired
@@ -103,12 +106,13 @@ public class PatientView {
     }
 
     private String formatPatientVisitDetails(PatientVisit visit) {
-        return String.format("Time: %s\nWeight: %.2f\nHeight: %.2f\nBody Temp: %.2f\nBlood Pressure: %.2f\nNurse Notes: %s\nSymptoms: %s\nDoctor's Notes: %s\nPrescriptions: %s",
+        return String.format("Time: %s\nWeight: %.2f\nHeight: %.2f\nBody Temp: %.2f\nBlood Pressure: %.2f\nImmunization Record: %s\nNurse Notes: %s\nSymptoms: %s\nDoctor's Notes: %s\nPrescriptions: %s",
                 visit.getTime().toString(),
                 visit.getWeight(),
                 visit.getHeight(),
                 visit.getBodyTemp(),
                 visit.getBloodPressure(),
+                visit.getImmunizationRecord(),
                 visit.getNurseNotes(),
                 visit.getSymptoms(),
                 visit.getDrNotes(),
@@ -199,7 +203,16 @@ public class PatientView {
 
         messageDetailView = new TextArea();
         VBox messageListContainer = new VBox(new Label("Messages"), messageListView);
-        VBox messageDetailContainer = new VBox(new Label("Message Detail"), messageDetailView);
+        Button replyButton = new Button("Reply");
+        replyButton.setOnAction(e -> {
+            if (messageListView.getSelectionModel().getSelectedItem() != null) {
+                openReplyDialog(messageListView.getSelectionModel().getSelectedItem());
+            }
+        });
+        messageDetailContainer = new VBox(new Label("Message Detail"), messageDetailView, replyButton);
+
+//        messageDetailContainer.getChildren().add(replyButton);
+
         mainArea.getItems().addAll(messageListContainer, messageDetailContainer);
         root.setCenter(mainArea);
 
@@ -208,11 +221,13 @@ public class PatientView {
 
         messageListView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
+                messageDetailContainer.getChildren().remove(repliesContainer);
+//                repliesContainer = null;
                 displayMessageDetails(newSelection.getId());
             }
         });
         refreshMessages();
-
+//        VBox.setVgrow(root, Priority.ALWAYS);
         tab.setContent(root);
     }
 
@@ -259,19 +274,15 @@ public class PatientView {
         });
     }
 
-
-
     private void refreshMessages() {
-        List<Message> messages = Stream.concat(
-                messageRepository.findBySenderEmail(currentPatient.getEmail()).stream(),
-                messageRepository.findByRecipientEmail(currentPatient.getEmail()).stream()
-        ).distinct().toList();
+        List<Message> messages = messageRepository.findByRecipientEmail(currentPatient.getEmail());
 
         messagePreviews.clear();
         messagePreviews.addAll(messages);
     }
 
-    private void displayMessageDetails(Long messageId) {
+    @Transactional
+    public void displayMessageDetails(Long messageId) {
         messageRepository.findById(messageId).ifPresent(message -> {
             String details = String.format("Title: %s\nFrom: %s\nTo: %s\n\n%s",
                     message.getTitle(),
@@ -279,6 +290,68 @@ public class PatientView {
                     message.getRecipient().getEmail(),
                     message.getContent());
             messageDetailView.setText(details);
+
+            // Prepare a container specifically for replies, which does not disturb the "Reply" button
+//            repliesContainer = null;
+            messageDetailContainer.getChildren().remove(repliesContainer);
+            repliesContainer = null;
+            repliesContainer = new VBox();
+            if (message.getReplies() != null) {
+                message.getReplies().forEach(reply -> {
+                    String replyText = String.format("From: %s\n%s",
+                            reply.getSender().getEmail(),
+                            reply.getContent());
+                    Label replyLabel = new Label(replyText);
+                    repliesContainer.getChildren().add(replyLabel);
+                });
+            }
+
+            messageDetailContainer.getChildren().add(repliesContainer);
+
+//            ScrollPane repliesScrollPane = new ScrollPane(repliesContainer);
+//            repliesScrollPane.setFitToWidth(true);
+//
+//            messageDetailContainer.getChildren().add(repliesScrollPane);
+
+        });
+    }
+
+    private void openReplyDialog(Message originalMessage) {
+        Dialog<Message> dialog = new Dialog<>();
+        dialog.setTitle("Reply to Message");
+
+        // Setup form
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+
+        TextArea messageBodyField = new TextArea();
+
+        grid.add(new Label("Message:"), 0, 0);
+        grid.add(messageBodyField, 1, 0);
+
+        dialog.getDialogPane().setContent(grid);
+        ButtonType sendButtonType = new ButtonType("Send", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(sendButtonType, ButtonType.CANCEL);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == sendButtonType) {
+                Message reply = new Message();
+                reply.setContent(messageBodyField.getText());
+                reply.setTitle("Re: " + originalMessage.getTitle());
+                reply.setRecipient(originalMessage.getSender());
+                reply.setSender(currentPatient);
+                // Set the original message as the parent of this reply
+                reply.setParentMessage(originalMessage);
+                messageRepository.save(reply);
+                return reply;
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(message -> {
+            System.out.println("Reply sent: " + message.getTitle());
+            refreshMessages();
         });
     }
 

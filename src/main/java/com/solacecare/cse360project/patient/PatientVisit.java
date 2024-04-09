@@ -20,6 +20,7 @@ public class PatientVisit {
     private double height;
     private double bodyTemp;
     private double bloodPressure;
+    private String immunizationRecord;
     private String nurseNotes;
     private String symptoms;
     private String drNotes;
@@ -31,7 +32,7 @@ public class PatientVisit {
     public PatientVisit() {
     }
 
-    public PatientVisit(LocalDate dateOfBirth, LocalDate date, LocalTime time, String patientIdentifier, double weight, double height, double bodyTemp, double bloodPressure, String nurseNotes) {
+    public PatientVisit(LocalDate dateOfBirth, LocalDate date, LocalTime time, String patientIdentifier, double weight, double height, double bodyTemp, double bloodPressure, String immunizationRecord, String nurseNotes) {
         this.dateOfBirth = dateOfBirth;
         this.date = date;
         this.time = time;
@@ -40,6 +41,7 @@ public class PatientVisit {
         this.height = height;
         this.bodyTemp = bodyTemp;
         this.bloodPressure = bloodPressure;
+        this.immunizationRecord = immunizationRecord;
         this.nurseNotes = nurseNotes;
     }
 
@@ -105,6 +107,14 @@ public class PatientVisit {
 
     public void setBloodPressure(double bloodPressure) {
         this.bloodPressure = bloodPressure;
+    }
+
+    public String getImmunizationRecord() {
+        return immunizationRecord;
+    }
+
+    public void setImmunizationRecord(String immunizationRecord) {
+        this.immunizationRecord = immunizationRecord;
     }
 
     public String getNurseNotes() {

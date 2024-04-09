@@ -8,6 +8,7 @@ import com.solacecare.cse360project.patient.PatientService;
 import com.solacecare.cse360project.patient.PatientVisit;
 import com.solacecare.cse360project.patient.Prescription;
 import com.solacecare.cse360project.patient.PatientVisitRepository;
+import jakarta.transaction.Transactional;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -36,7 +37,9 @@ public class NurseView {
     private VBox layout;
     private Stage stage;
     private ObservableList<Message> messagePreviews;
-    TextArea messageDetailView;
+    private TextArea messageDetailView;
+    private VBox messageDetailContainer;
+    private VBox repliesContainer;
     private Nurse currentNurse;
 
     private String patientIdentifier;
@@ -77,6 +80,8 @@ public class NurseView {
         TextField bodyTempT = new TextField();
         Label bloodPressL = new Label("Blood Pressure: ");
         TextField bloodPressT = new TextField();
+        Label immunizationL = new Label("Immunization Record: ");
+        TextArea immunizationT = new TextArea();
         Label allergiesL = new Label("Allergies: ");
         TextArea allergiesT = new TextArea();
         Label concernsL = new Label("Concerns: ");
@@ -96,10 +101,11 @@ public class NurseView {
                     double height = Double.parseDouble(heightT.getText());
                     double bodyTemperature = Double.parseDouble(bodyTempT.getText());
                     double bloodPressure = Double.parseDouble(bloodPressT.getText());
+                    String immunization = immunizationT.getText();
                     String allergies = allergiesT.getText();
                     String concerns = concernsT.getText();
 
-                    patientVisitRepository.saveAndFlush(new PatientVisit(dateOfBirth, LocalDate.now(), LocalTime.now(), patientIdentifier, weight, height, bodyTemperature, bloodPressure, "\n" + allergies + "\n" + concerns));
+                    patientVisitRepository.saveAndFlush(new PatientVisit(dateOfBirth, LocalDate.now(), LocalTime.now(), patientIdentifier, weight, height, bodyTemperature, bloodPressure, immunization, "\n" + allergies + "\n" + concerns));
 
                     message.setTextFill(Color.LIMEGREEN);
                     message.setText("Patient with identifier: " + patientIdentifier + " saved successfully");
@@ -132,12 +138,14 @@ public class NurseView {
         patientVitals.add(bodyTempT, 1, 5);
         patientVitals.add(bloodPressL, 0, 6);
         patientVitals.add(bloodPressT, 1, 6);
-        patientVitals.add(allergiesL, 0, 7);
-        patientVitals.add(allergiesT, 1, 7);
-        patientVitals.add(concernsL, 0, 8);
-        patientVitals.add(concernsT, 1, 8);
-        patientVitals.add(saveB, 0, 9);
-        patientVitals.add(message, 0, 10);
+        patientVitals.add(immunizationL, 0, 7);
+        patientVitals.add(immunizationT, 1, 7);
+        patientVitals.add(allergiesL, 0, 8);
+        patientVitals.add(allergiesT, 1, 8);
+        patientVitals.add(concernsL, 0, 9);
+        patientVitals.add(concernsT, 1, 9);
+        patientVitals.add(saveB, 0, 10);
+        patientVitals.add(message, 1, 11);
 
 
         tabPatientVitals.setContent(patientVitals);
@@ -165,47 +173,7 @@ public class NurseView {
         Tab tabMessages = new Tab("Messages");
         tabMessages.setClosable(false);
         //TODO: Add components for messages here...
-        BorderPane root = new BorderPane();
-        HBox topBar = new HBox();
-        Button composeButton = new Button("Compose");
-        Button refreshButton = new Button("Refresh");
-        topBar.getChildren().addAll(composeButton, refreshButton);
-        root.setTop(topBar);
-
-        // SplitPane for message list and detail view
-        SplitPane mainArea = new SplitPane();
-        messagePreviews = FXCollections.observableArrayList();
-        ListView<Message> messageListView = new ListView<>(messagePreviews);
-        messageListView.setCellFactory(lv -> new ListCell<Message>() {
-            @Override
-            protected void updateItem(Message message, boolean empty) {
-                super.updateItem(message, empty);
-                if (empty || message == null) {
-                    setText(null);
-                } else {
-                    setText(message.getTitle() + " - " + message.getContent().substring(0, Math.min(message.getContent().length(), 50)) + "...");
-                }
-            }
-        });
-
-        messageDetailView = new TextArea();
-        VBox messageListContainer = new VBox(new Label("Messages"), messageListView);
-        VBox messageDetailContainer = new VBox(new Label("Message Detail"), messageDetailView);
-        mainArea.getItems().addAll(messageListContainer, messageDetailContainer);
-        root.setCenter(mainArea);
-
-        composeButton.setOnAction(e -> openComposeDialog());
-        refreshButton.setOnAction(e -> refreshMessages());
-
-        messageListView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (newSelection != null) {
-                displayMessageDetails(newSelection.getId());
-            }
-        });
-
-        refreshMessages();
-        view.getTabs().addAll(tabPatientVitals, tabPatientHistory, tabMessages);
-        tabMessages.setContent(root);
+        setupMessagesTab(tabMessages);
 
         Button logoutButton = new Button("Logout");
         logoutButton.setOnAction(e -> MainJFX.goToUserSelectView());
@@ -240,18 +208,60 @@ public class NurseView {
         }
     }
 
+    private void setupMessagesTab(Tab tab) {
+        // Similar setup as provided in the messages tab of NurseView,
+        // adjusted for PatientView specifics
+        BorderPane root = new BorderPane();
+        HBox topBar = new HBox();
+        Button composeButton = new Button("Compose");
+        Button refreshButton = new Button("Refresh");
+        topBar.getChildren().addAll(composeButton, refreshButton);
+        root.setTop(topBar);
 
-    private String formatPatientVisitDetails(PatientVisit visit) {
-        return String.format("Time: %s\nWeight: %.2f\nHeight: %.2f\nBody Temp: %.2f\nBlood Pressure: %.2f\nNurse Notes: %s\nSymptoms: %s\nDoctor's Notes: %s\nPrescriptions: %s",
-                visit.getTime().toString(),
-                visit.getWeight(),
-                visit.getHeight(),
-                visit.getBodyTemp(),
-                visit.getBloodPressure(),
-                visit.getNurseNotes(),
-                visit.getSymptoms(),
-                visit.getDrNotes(),
-                visit.getPrescriptions().stream().map(Prescription::toString).collect(Collectors.joining(", ")));
+        // SplitPane for message list and detail view
+        SplitPane mainArea = new SplitPane();
+        messagePreviews = FXCollections.observableArrayList();
+        ListView<Message> messageListView = new ListView<>(messagePreviews);
+        messageListView.setCellFactory(lv -> new ListCell<Message>() {
+            @Override
+            protected void updateItem(Message message, boolean empty) {
+                super.updateItem(message, empty);
+                if (empty || message == null) {
+                    setText(null);
+                } else {
+                    setText(message.getTitle() + " - " + message.getContent().substring(0, Math.min(message.getContent().length(), 50)) + "...");
+                }
+            }
+        });
+
+        messageDetailView = new TextArea();
+        VBox messageListContainer = new VBox(new Label("Messages"), messageListView);
+        Button replyButton = new Button("Reply");
+        replyButton.setOnAction(e -> {
+            if (messageListView.getSelectionModel().getSelectedItem() != null) {
+                openReplyDialog(messageListView.getSelectionModel().getSelectedItem());
+            }
+        });
+        messageDetailContainer = new VBox(new Label("Message Detail"), messageDetailView, replyButton);
+
+//        messageDetailContainer.getChildren().add(replyButton);
+
+        mainArea.getItems().addAll(messageListContainer, messageDetailContainer);
+        root.setCenter(mainArea);
+
+        composeButton.setOnAction(e -> openComposeDialog());
+        refreshButton.setOnAction(e -> refreshMessages());
+
+        messageListView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null) {
+                messageDetailContainer.getChildren().remove(repliesContainer);
+//                repliesContainer = null;
+                displayMessageDetails(newSelection.getId());
+            }
+        });
+        refreshMessages();
+//        VBox.setVgrow(root, Priority.ALWAYS);
+        tab.setContent(root);
     }
 
     private void openComposeDialog() {
@@ -297,22 +307,15 @@ public class NurseView {
         });
     }
 
-
-
     private void refreshMessages() {
-        List<Message> messages = Stream.concat(
-                messageRepository.findBySenderEmail(currentNurse.getEmail()).stream(),
-                messageRepository.findByRecipientEmail(currentNurse.getEmail()).stream()
-        ).distinct().toList();
+        List<Message> messages = messageRepository.findByRecipientEmail(currentNurse.getEmail());
 
         messagePreviews.clear();
         messagePreviews.addAll(messages);
     }
 
-
-
-
-    private void displayMessageDetails(Long messageId) {
+    @Transactional
+    public void displayMessageDetails(Long messageId) {
         messageRepository.findById(messageId).ifPresent(message -> {
             String details = String.format("Title: %s\nFrom: %s\nTo: %s\n\n%s",
                     message.getTitle(),
@@ -320,7 +323,83 @@ public class NurseView {
                     message.getRecipient().getEmail(),
                     message.getContent());
             messageDetailView.setText(details);
+
+            // Prepare a container specifically for replies, which does not disturb the "Reply" button
+//            repliesContainer = null;
+            messageDetailContainer.getChildren().remove(repliesContainer);
+            repliesContainer = null;
+            repliesContainer = new VBox();
+            if (message.getReplies() != null) {
+                message.getReplies().forEach(reply -> {
+                    String replyText = String.format("From: %s\n%s",
+                            reply.getSender().getEmail(),
+                            reply.getContent());
+                    Label replyLabel = new Label(replyText);
+                    repliesContainer.getChildren().add(replyLabel);
+                });
+            }
+
+            messageDetailContainer.getChildren().add(repliesContainer);
+
+//            ScrollPane repliesScrollPane = new ScrollPane(repliesContainer);
+//            repliesScrollPane.setFitToWidth(true);
+//
+//            messageDetailContainer.getChildren().add(repliesScrollPane);
+
         });
+    }
+
+    private void openReplyDialog(Message originalMessage) {
+        Dialog<Message> dialog = new Dialog<>();
+        dialog.setTitle("Reply to Message");
+
+        // Setup form
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+
+        TextArea messageBodyField = new TextArea();
+
+        grid.add(new Label("Message:"), 0, 0);
+        grid.add(messageBodyField, 1, 0);
+
+        dialog.getDialogPane().setContent(grid);
+        ButtonType sendButtonType = new ButtonType("Send", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(sendButtonType, ButtonType.CANCEL);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == sendButtonType) {
+                Message reply = new Message();
+                reply.setContent(messageBodyField.getText());
+                reply.setTitle("Re: " + originalMessage.getTitle());
+                reply.setRecipient(originalMessage.getSender());
+                reply.setSender(currentNurse);
+                // Set the original message as the parent of this reply
+                reply.setParentMessage(originalMessage);
+                messageRepository.save(reply);
+                return reply;
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(message -> {
+            System.out.println("Reply sent: " + message.getTitle());
+            refreshMessages();
+        });
+    }
+
+    private String formatPatientVisitDetails(PatientVisit visit) {
+        return String.format("Time: %s\nWeight: %.2f\nHeight: %.2f\nBody Temp: %.2f\nBlood Pressure: %.2f\nImmunization Record: %s\nNurse Notes: %s\nSymptoms: %s\nDoctor's Notes: %s\nPrescriptions: %s",
+                visit.getTime().toString(),
+                visit.getWeight(),
+                visit.getHeight(),
+                visit.getBodyTemp(),
+                visit.getBloodPressure(),
+                visit.getImmunizationRecord(),
+                visit.getNurseNotes(),
+                visit.getSymptoms(),
+                visit.getDrNotes(),
+                visit.getPrescriptions().stream().map(Prescription::toString).collect(Collectors.joining(", ")));
     }
 
     public void setStage(Stage stage){
